@@ -1,105 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatty - Twitch Authentication</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .container {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-        .success {
-            background: rgba(34, 197, 94, 0.2);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-        .error {
-            background: rgba(220, 38, 38, 0.2);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-    </style>
+    <title>Chatty Auth</title>
 </head>
 <body>
-    <div class="container">
-        <div style="font-size: 64px; margin-bottom: 20px;">🎮</div>
-        <h1 id="title">Authenticating...</h1>
-        <p id="message">Processing your Twitch authentication</p>
-    </div>
-
     <script>
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
+        // Immediately check if we have a token
+        const hash = window.location.hash;
         
-        const accessToken = params.get('access_token');
-        const expiresIn = params.get('expires_in') || '3600'; // Default to 1 hour if not provided
-        const error = params.get('error');
-        const errorDescription = params.get('error_description');
-        
-        const titleEl = document.getElementById('title');
-        const messageEl = document.getElementById('message');
-        
-        console.log('📍 Redirect page loaded');
-        console.log('📍 URL:', window.location.href);
-        console.log('📍 Hash:', hash);
-        
-        if (error) {
-            titleEl.textContent = 'Authentication Failed';
-            messageEl.innerHTML = `
-                <div class="error">
-                    <strong>Error:</strong> ${error}<br>
-                    ${errorDescription || 'Unknown error'}
-                </div>
-                <p style="margin-top: 20px;">This window should close automatically.</p>
-            `;
-            console.error('❌ OAuth Error:', error, errorDescription);
-        } else if (accessToken) {
-            titleEl.textContent = 'Authentication Successful!';
-            messageEl.innerHTML = `
-                <div class="success">
-                    ✅ Successfully authenticated with Twitch<br>
-                    Token expires in ${expiresIn} seconds
-                </div>
-                <p style="margin-top: 20px;">Returning to app...</p>
-            `;
+        if (hash && hash.includes('access_token')) {
+            // Token found! Log it for debugging
+            console.log('✅ Token found in URL');
+            console.log('📍 Full URL:', window.location.href);
             
-            console.log('✅ Authentication successful!');
-            console.log('✅ Token received (first 20 chars):', accessToken.substring(0, 20) + '...');
-            console.log('✅ Expires in:', expiresIn, 'seconds');
-            
-            // CRITICAL: Redirect to a simple "success" page immediately
-            // This allows ASWebAuthenticationSession to capture the URL with the token
-            setTimeout(() => {
-                // Redirect to a blank page with the hash preserved
-                // This triggers ASWebAuthenticationSession to capture and close
-                window.location.href = window.location.origin + window.location.pathname + '#success';
-            }, 100);
+            // ASWebAuthenticationSession will capture this URL automatically
+            // We don't need to do anything else
+            document.body.innerHTML = '<h1 style="color: green;">✅ Success! Returning to app...</h1>';
+        } else if (hash && hash.includes('error')) {
+            // Error from OAuth
+            const params = new URLSearchParams(hash.substring(1));
+            const error = params.get('error');
+            console.error('❌ OAuth error:', error);
+            document.body.innerHTML = '<h1 style="color: red;">❌ Error: ' + error + '</h1>';
         } else {
-            titleEl.textContent = 'Unexpected Response';
-            messageEl.innerHTML = `
-                <div class="error">
-                    No access token received.<br>
-                    Please check your app configuration.
-                </div>
-                <p style="margin-top: 20px;">URL: <code>${window.location.href}</code></p>
-            `;
-            console.error('❌ No token found in URL');
+            // No hash - probably the success redirect
+            console.log('📍 No hash in URL');
+            document.body.innerHTML = '<h1>Redirecting...</h1>';
         }
     </script>
 </body>
