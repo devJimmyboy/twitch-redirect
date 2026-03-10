@@ -48,12 +48,16 @@
         const params = new URLSearchParams(hash);
         
         const accessToken = params.get('access_token');
-        const expiresIn = params.get('expires_in');
+        const expiresIn = params.get('expires_in') || '3600'; // Default to 1 hour if not provided
         const error = params.get('error');
         const errorDescription = params.get('error_description');
         
         const titleEl = document.getElementById('title');
         const messageEl = document.getElementById('message');
+        
+        console.log('📍 Redirect page loaded');
+        console.log('📍 URL:', window.location.href);
+        console.log('📍 Hash:', hash);
         
         if (error) {
             titleEl.textContent = 'Authentication Failed';
@@ -62,8 +66,9 @@
                     <strong>Error:</strong> ${error}<br>
                     ${errorDescription || 'Unknown error'}
                 </div>
-                <p style="margin-top: 20px;">Please close this window and try again.</p>
+                <p style="margin-top: 20px;">This window should close automatically.</p>
             `;
+            console.error('❌ OAuth Error:', error, errorDescription);
         } else if (accessToken) {
             titleEl.textContent = 'Authentication Successful!';
             messageEl.innerHTML = `
@@ -75,16 +80,16 @@
             `;
             
             console.log('✅ Authentication successful!');
-            console.log('Token received (first 20 chars):', accessToken.substring(0, 20) + '...');
+            console.log('✅ Token received (first 20 chars):', accessToken.substring(0, 20) + '...');
+            console.log('✅ Expires in:', expiresIn, 'seconds');
             
-            // Don't auto-close - let ASWebAuthenticationSession handle it
+            // CRITICAL: Redirect to a simple "success" page immediately
+            // This allows ASWebAuthenticationSession to capture the URL with the token
             setTimeout(() => {
-                messageEl.innerHTML += `
-                    <p style="margin-top: 20px; opacity: 0.8;">
-                        <small>The app should open automatically.<br>If not, close this window.</small>
-                    </p>
-                `;
-            }, 3000);
+                // Redirect to a blank page with the hash preserved
+                // This triggers ASWebAuthenticationSession to capture and close
+                window.location.href = window.location.origin + window.location.pathname + '#success';
+            }, 100);
         } else {
             titleEl.textContent = 'Unexpected Response';
             messageEl.innerHTML = `
@@ -92,7 +97,9 @@
                     No access token received.<br>
                     Please check your app configuration.
                 </div>
+                <p style="margin-top: 20px;">URL: <code>${window.location.href}</code></p>
             `;
+            console.error('❌ No token found in URL');
         }
     </script>
 </body>
