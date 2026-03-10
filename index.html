@@ -5,6 +5,7 @@
     <title>Chatty Auth</title>
 </head>
 <body>
+
     <script>
         // Immediately check if we have a token
         const hash = window.location.hash;
@@ -16,7 +17,7 @@
             
             // ASWebAuthenticationSession will capture this URL automatically
             // We don't need to do anything else
-            document.body.innerHTML = '<h1 style="color: green;">✅ Success! Returning to app...</h1>';
+            document.body.innerHTML = `<h1 style="color: green;">✅ Success! Returning to app...</h1><br/><h1>URL: ${window.location.href}</h1>`;
         } else if (hash && hash.includes('error')) {
             // Error from OAuth
             const params = new URLSearchParams(hash.substring(1));
@@ -28,6 +29,8 @@
             console.log('📍 No hash in URL');
             document.body.innerHTML = '<h1>Redirecting...</h1>';
         }
+
+        
     </script>
 </body>
 </html>
