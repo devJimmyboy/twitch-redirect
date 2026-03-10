@@ -2,35 +2,74 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Chatty Auth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatty - Twitch Auth</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+        .icon { font-size: 64px; margin-bottom: 20px; }
+        h1 { margin: 0 0 10px 0; }
+        p { opacity: 0.9; }
+    </style>
 </head>
 <body>
-
+    <div class="card">
+        <div class="icon">✅</div>
+        <h1>Authentication Successful!</h1>
+        <p>Returning to Chatty...</p>
+    </div>
+    
     <script>
-        // Immediately check if we have a token
-        const hash = window.location.hash;
+        // Extract token and other params from URL hash
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const error = params.get('error');
         
-        if (hash && hash.includes('access_token')) {
-            // Token found! Log it for debugging
-            console.log('✅ Token found in URL');
-            console.log('📍 Full URL:', window.location.href);
-            
-            // ASWebAuthenticationSession will capture this URL automatically
-            // We don't need to do anything else
-            document.body.innerHTML = `<h1 style="color: green;">✅ Success! Returning to app...</h1><br/><h1>URL: ${window.location.href}</h1>`;
-        } else if (hash && hash.includes('error')) {
-            // Error from OAuth
-            const params = new URLSearchParams(hash.substring(1));
-            const error = params.get('error');
+        console.log('📍 Redirect page loaded');
+        console.log('📍 URL:', window.location.href);
+        console.log('📍 Has token:', !!accessToken);
+        
+        if (error) {
+            // Handle OAuth error
+            document.querySelector('.icon').textContent = '❌';
+            document.querySelector('h1').textContent = 'Authentication Failed';
+            document.querySelector('p').textContent = 'Error: ' + error;
             console.error('❌ OAuth error:', error);
-            document.body.innerHTML = '<h1 style="color: red;">❌ Error: ' + error + '</h1>';
+        } else if (accessToken) {
+            // SUCCESS! Redirect to custom URL scheme
+            // This will be captured by ASWebAuthenticationSession
+            const customURL = 'chatty://auth' + window.location.hash;
+            console.log('✅ Token received! Redirecting to app...');
+            console.log('🔀 Custom URL:', customURL);
+            
+            // Redirect after 1 second (so user sees success message)
+            setTimeout(() => {
+                window.location.href = customURL;
+            }, 1000);
         } else {
-            // No hash - probably the success redirect
-            console.log('📍 No hash in URL');
-            document.body.innerHTML = '<h1>Redirecting...</h1>';
+            // No token and no error
+            document.querySelector('.icon').textContent = '⚠️';
+            document.querySelector('h1').textContent = 'No Token Received';
+            document.querySelector('p').textContent = 'Please try again';
+            console.error('❌ No token in URL');
         }
-
-        
     </script>
 </body>
 </html>
